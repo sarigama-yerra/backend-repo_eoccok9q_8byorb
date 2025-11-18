@@ -1,9 +1,21 @@
 INFO:     Will watch for changes in these directories: ['/home/workspace']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [145] using StatReload
-INFO:     Started server process [147]
+INFO:     Started reloader process [254] using WatchFiles
+INFO:     Started server process [258]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     172.20.0.1:42924 - "HEAD / HTTP/1.1" 405 Method Not Allowed
-INFO:     172.20.0.1:45096 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
-INFO:     172.20.0.1:45104 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59582 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59594 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59592 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59586 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59610 - "HEAD / HTTP/1.1" 405 Method Not Allowed
+INFO:     172.20.0.1:59586 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59594 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59592 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:59592 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:42834 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:42846 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:35122 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:35136 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:54800 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error
+INFO:     172.20.0.1:54800 - "GET /api/wishes HTTP/1.1" 500 Internal Server Error

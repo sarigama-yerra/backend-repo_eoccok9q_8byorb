@@ -1,15 +1,15 @@
-import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, Dict, List
 from datetime import datetime
 
-from database import create_document, get_documents, db
+from database import create_document, get_documents
 from schemas import Wish
 
-app = FastAPI()
+app = FastAPI(title="Birthday Wishes API", version="1.0.0")
 
+# CORS - allow all origins for dev preview
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,88 +18,68 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Birthday Wishes API is running"}
 
-@app.get("/api/hello")
-def hello():
-    return {"message": "Hello from the backend API!"}
-
-# Wishes Endpoints
-class WishResponse(BaseModel):
+class WishOut(BaseModel):
     id: str
     name: str
-    relation: Optional[str] = None
+    relation: str | None = None
     message: str
     is_public: bool
-    created_at: Optional[str] = None
+    created_at: datetime | None = None
 
-@app.get("/api/wishes", response_model=List[WishResponse])
-def list_wishes(limit: int = 50, public_only: bool = True):
-    try:
-        filt = {"is_public": True} if public_only else {}
-        docs = get_documents("wish", filt, limit=limit)
-        results = []
-        for d in docs:
-            results.append(WishResponse(
-                id=str(d.get("_id")),
-                name=d.get("name", "Anonymous"),
-                relation=d.get("relation"),
-                message=d.get("message", ""),
-                is_public=bool(d.get("is_public", True)),
-                created_at=(d.get("created_at").isoformat() if d.get("created_at") else None)
-            ))
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/wishes", status_code=201)
-def create_wish(payload: Wish):
-    try:
-        wish_id = create_document("wish", payload)
-        return {"id": wish_id, "status": "ok"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/")
+async def root() -> Dict[str, str]:
+    return {"status": "ok", "message": "Birthday Wishes API"}
+
 
 @app.get("/test")
-def test_database():
-    """Test endpoint to check if database is available and accessible"""
-    response = {
-        "backend": "✅ Running",
-        "database": "❌ Not Available",
-        "database_url": None,
-        "database_name": None,
-        "connection_status": "Not Connected",
-        "collections": []
-    }
-
+async def test_db() -> Dict[str, Any]:
+    """Quick DB connectivity test."""
     try:
-        if db is not None:
-            response["database"] = "✅ Available"
-            response["database_url"] = "✅ Configured"
-            response["database_name"] = db.name if hasattr(db, 'name') else "✅ Connected"
-            response["connection_status"] = "Connected"
-
-            try:
-                collections = db.list_collection_names()
-                response["collections"] = collections[:10]
-                response["database"] = "✅ Connected & Working"
-            except Exception as e:
-                response["database"] = f"⚠️  Connected but Error: {str(e)[:50]}"
-        else:
-            response["database"] = "⚠️  Available but not initialized"
-
+        # just attempt a simple list on a non-critical collection
+        _ = get_documents("wish", {}, limit=1)
+        return {"ok": True}
     except Exception as e:
-        response["database"] = f"❌ Error: {str(e)[:50]}"
-
-    response["database_url"] = "✅ Set" if os.getenv("DATABASE_URL") else "❌ Not Set"
-    response["database_name"] = "✅ Set" if os.getenv("DATABASE_NAME") else "❌ Not Set"
-
-    return response
+        return {"ok": False, "error": str(e)}
 
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/api/wishes", response_model=List[WishOut])
+async def list_public_wishes(limit: int | None = 100):
+    try:
+        docs = get_documents("wish", {"is_public": True}, limit=limit)
+        # sort newest first if created_at exists
+        docs.sort(key=lambda d: d.get("created_at", datetime.min), reverse=True)
+        result: List[WishOut] = []
+        for d in docs:
+            result.append(
+                WishOut(
+                    id=str(d.get("_id")),
+                    name=d.get("name", "Someone"),
+                    relation=d.get("relation"),
+                    message=d.get("message", ""),
+                    is_public=bool(d.get("is_public", True)),
+                    created_at=d.get("created_at"),
+                )
+            )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/wishes", response_model=WishOut, status_code=201)
+async def create_wish(payload: Wish):
+    try:
+        inserted_id = create_document("wish", payload)
+        # Build response
+        now = datetime.utcnow()
+        return WishOut(
+            id=inserted_id,
+            name=payload.name,
+            relation=payload.relation,
+            message=payload.message,
+            is_public=payload.is_public,
+            created_at=now,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
